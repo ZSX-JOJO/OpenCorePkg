@@ -23,7 +23,7 @@
   @param[in] String  The Null-terminated string literal.
 
 **/
-#define L_STR_LEN(String) (ARRAY_SIZE (String) - 1)
+#define L_STR_LEN(String)  (ARRAY_SIZE (String) - 1)
 
 /**
   Returns the size of a Null-terminated string literal in bytes, including the
@@ -32,7 +32,7 @@
   @param[in] String  The Null-terminated string literal.
 
 **/
-#define L_STR_SIZE(String) (sizeof (String))
+#define L_STR_SIZE(String)  (sizeof (String))
 
 /**
   Returns the size of a Null-terminated string literal in bytes, excluding the
@@ -41,7 +41,15 @@
   @param[in] String  The Null-terminated string literal.
 
 **/
-#define L_STR_SIZE_NT(String) (sizeof (String) - sizeof (*(String)))
+#define L_STR_SIZE_NT(String)  (sizeof (String) - sizeof (*(String)))
+
+/**
+  Ascii or Unicode string format for methods which can accept either format.
+**/
+typedef enum _OC_STRING_FORMAT {
+  OcStringFormatAscii,
+  OcStringFormatUnicode
+} OC_STRING_FORMAT;
 
 /** Check if character is printable
 
@@ -94,7 +102,7 @@ IsAsciiNumber (
 **/
 VOID
 AsciiUefiSlashes (
-  IN OUT CHAR8    *String
+  IN OUT CHAR8  *String
   );
 
 /**
@@ -104,7 +112,7 @@ AsciiUefiSlashes (
 **/
 VOID
 AsciiUnixSlashes (
-  IN OUT CHAR8    *String
+  IN OUT CHAR8  *String
   );
 
 /** Convert null terminated ascii string to unicode.
@@ -116,12 +124,12 @@ AsciiUnixSlashes (
 **/
 CHAR16 *
 AsciiStrCopyToUnicode (
-  IN  CONST CHAR8   *String,
-  IN  UINTN         Length
+  IN  CONST CHAR8  *String,
+  IN  UINTN        Length
   );
 
 /**
-  Convert 64-bit unsigned integer to a nul-termianted hex string.
+  Convert 64-bit unsigned integer to a nul-terminated hex string.
 
   @param[out]  Buffer      Destination buffer.
   @param[in]   BufferSize  Destination buffer size in bytes.
@@ -152,9 +160,9 @@ AsciiUint64ToLowerHex (
 EFI_STATUS
 EFIAPI
 OcAsciiSafeSPrint (
-  OUT CHAR8         *StartOfBuffer,
-  IN  UINTN         BufferSize,
-  IN  CONST CHAR8   *FormatString,
+  OUT CHAR8        *StartOfBuffer,
+  IN  UINTN        BufferSize,
+  IN  CONST CHAR8  *FormatString,
   ...
   );
 
@@ -196,9 +204,9 @@ OcAsciiSafeSPrint (
 INTN
 EFIAPI
 OcAsciiStrniCmp (
-  IN CONST CHAR8   *FirstString,
-  IN CONST CHAR8   *SecondString,
-  IN UINTN         Length
+  IN CONST CHAR8  *FirstString,
+  IN CONST CHAR8  *SecondString,
+  IN UINTN        Length
   );
 
 /** Check if ASCII string ends with another ASCII string.
@@ -213,9 +221,9 @@ OcAsciiStrniCmp (
 BOOLEAN
 EFIAPI
 OcAsciiEndsWith (
-  IN CONST CHAR8      *String,
-  IN CONST CHAR8      *SearchString,
-  IN BOOLEAN          CaseInsensitiveMatch
+  IN CONST CHAR8  *String,
+  IN CONST CHAR8  *SearchString,
+  IN BOOLEAN      CaseInsensitiveMatch
   );
 
 /** Check if ASCII string starts with another ASCII string.
@@ -230,9 +238,9 @@ OcAsciiEndsWith (
 BOOLEAN
 EFIAPI
 OcAsciiStartsWith (
-  IN CONST CHAR8      *String,
-  IN CONST CHAR8      *SearchString,
-  IN BOOLEAN          CaseInsensitiveMatch
+  IN CONST CHAR8  *String,
+  IN CONST CHAR8  *SearchString,
+  IN BOOLEAN      CaseInsensitiveMatch
   );
 
 /**
@@ -343,8 +351,8 @@ OcStrniCmp (
 CHAR8 *
 EFIAPI
 OcAsciiStriStr (
-  IN      CONST CHAR8              *String,
-  IN      CONST CHAR8              *SearchString
+  IN      CONST CHAR8  *String,
+  IN      CONST CHAR8  *SearchString
   );
 
 /**
@@ -366,8 +374,8 @@ OcAsciiStriStr (
 CHAR8 *
 EFIAPI
 OcAsciiStrChr (
-  IN      CONST CHAR8              *String,
-  IN            CHAR8              Char
+  IN      CONST CHAR8  *String,
+  IN            CHAR8  Char
   );
 
 /**
@@ -389,8 +397,8 @@ OcAsciiStrChr (
 CHAR8 *
 EFIAPI
 OcAsciiStrrChr (
-  IN      CONST CHAR8              *String,
-  IN            CHAR8              Char
+  IN      CONST CHAR8  *String,
+  IN            CHAR8  Char
   );
 
 /**
@@ -422,8 +430,8 @@ OcAsciiStringNPrintable (
 EFI_STATUS
 EFIAPI
 OcAsciiStrToRawGuid (
-  IN  CONST CHAR8        *String,
-  OUT GUID               *Guid
+  IN  CONST CHAR8  *String,
+  OUT GUID         *Guid
   );
 
 /**
@@ -454,7 +462,7 @@ OcAsciiPrintBuffer (
 **/
 CHAR8 *
 OcAsciiToLower (
-  CHAR8 *Str
+  CHAR8  *Str
   );
 
 /**
@@ -485,8 +493,8 @@ OcAsciiToLower (
 CHAR16 *
 EFIAPI
 OcStriStr (
-  IN      CONST CHAR16              *String,
-  IN      CONST CHAR16              *SearchString
+  IN      CONST CHAR16  *String,
+  IN      CONST CHAR16  *SearchString
   );
 
 /**
@@ -523,8 +531,8 @@ OcStrStrLength (
 CHAR16 *
 EFIAPI
 OcStrChr (
-  IN      CONST CHAR16              *String,
-  IN            CHAR16              Char
+  IN      CONST CHAR16  *String,
+  IN            CHAR16  Char
   );
 
 /**
@@ -542,8 +550,8 @@ OcStrChr (
 CHAR16 *
 EFIAPI
 OcStrrChr (
-  IN      CONST CHAR16              *String,
-  IN            CHAR16              Char
+  IN      CONST CHAR16  *String,
+  IN            CHAR16  Char
   );
 
 /**
@@ -580,9 +588,9 @@ OcUnicodeSafeSPrint (
 BOOLEAN
 EFIAPI
 OcUnicodeEndsWith (
-  IN CONST CHAR16     *String,
-  IN CONST CHAR16     *SearchString,
-  IN BOOLEAN          CaseInsensitiveMatch
+  IN CONST CHAR16  *String,
+  IN CONST CHAR16  *SearchString,
+  IN BOOLEAN       CaseInsensitiveMatch
   );
 
 /** Check if Unicode string starts with another Unicode string.
@@ -597,9 +605,9 @@ OcUnicodeEndsWith (
 BOOLEAN
 EFIAPI
 OcUnicodeStartsWith (
-  IN CONST CHAR16     *String,
-  IN CONST CHAR16     *SearchString,
-  IN BOOLEAN          CaseInsensitiveMatch
+  IN CONST CHAR16  *String,
+  IN CONST CHAR16  *SearchString,
+  IN BOOLEAN       CaseInsensitiveMatch
   );
 
 /**
@@ -718,8 +726,8 @@ MixedStrCmp (
 INTN
 EFIAPI
 OcReverseStringCompare (
-  IN  CONST VOID                *Buffer1,
-  IN  CONST VOID                *Buffer2
+  IN  CONST VOID  *Buffer1,
+  IN  CONST VOID  *Buffer2
   );
 
 /**
@@ -731,7 +739,19 @@ OcReverseStringCompare (
 **/
 BOOLEAN
 OcIsSpace (
-  CHAR16    Ch
+  CHAR16  Ch
+  );
+
+/**
+  Determine if a particular character is whitespace or CHAR_NULL.
+
+  @param[in] Ch               The character to check.
+
+  @return  Returns TRUE if Ch is a whitespace character or CHAR_NULL.
+**/
+BOOLEAN
+OcIsSpaceOrNull (
+  CHAR16  Ch
   );
 
 #endif // OC_STRING_LIB_H

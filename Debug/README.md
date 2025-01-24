@@ -16,6 +16,8 @@ The general approach is as follows:
 
 #### Preparing Source Code
 
+To get started, the compilation environment should be set up. Such commands can be found in `Docs/Configuration.pdf`, section `3.3 Contribution`.
+
 By default EDK II optimises produced binaries, so to build a "real" debug binary one should target
 `NOOPT`. Do be aware that it strongly affects resulting binary size:
 
@@ -74,6 +76,14 @@ during this pause will boot into firmware settings:
 bios.bootDelay = "3000"
 ```
 
+In order to test `AudioDxe.efi` in VMware Fusion, the `.vmx` file must contain the line:
+```
+sound.virtualDev = "hdaudio"
+```
+
+This is present by default in a VM set up as macOS guest, and may be added manually to a Linux guest.
+Current `AudioDxe.efi` UEFI sound quality in VMware Fusion is not representative of the quality available on real hardware.
+
 #### QEMU configuration
 
 In addition to VMware it is also possible to use [QEMU](https://www.qemu.org). QEMU debugging
@@ -92,7 +102,9 @@ when no macOS guest booting is required.
     To build OVMF with SMM support add `-D SMM_REQUIRE=1`. To build OVMF with serial debugging
     add `-D DEBUG_ON_SERIAL_PORT=1`.
 
-    _Note_: Optionally, you may build OvmfPkg with its own build script, which is located within the OvmfPkg directory. Use e.g. `./build.sh -a X64` or  `./build.sh -a X64 -b NOOPT`; additional build arguments such as for serial debugging or SMM support may be appended to this.
+    _Note_: Optionally, you may build OvmfPkg with its own build script, which is located within the OvmfPkg directory.
+    Use e.g. `./build.sh -a X64` or  `./build.sh -a X64 -b NOOPT`; additional build arguments such as for serial debugging
+    or SMM support may be appended to this.
 
 2. Prepare launch directory with OpenCore as usual. For example, make a directory named
     `QemuRun` and `cd` to it. You should have a similar directory structure:
@@ -110,7 +122,11 @@ when no macOS guest booting is required.
 
 3. Run QEMU
     
-    The OvmfPkg build script can also start the virtual machine which it has just built, e.g. `./build.sh -a X64 qemu -drive format=raw,file=fat:rw:ESP` should be sufficient to start OpenCore; all options after `qemu` are passed directly to QEMU. Starting QEMU this way uses file `OVMF.fd` from the OVMF build directory, which is `OVMF_CODE.fd` and `OVMF_VARS.fd` combined; you may prefer to follow the second example below which specifies these files separately.
+    The OvmfPkg build script can also start the virtual machine which it has just built, e.g.
+    `./build.sh -a X64 qemu -drive format=raw,file=fat:rw:ESP` should be sufficient to start OpenCore;
+    all options after `qemu` are passed directly to QEMU. Starting QEMU this way uses file `OVMF.fd`
+    from the OVMF build directory, which is `OVMF_CODE.fd` and `OVMF_VARS.fd` combined; you may prefer
+    to follow the second example below which specifies these files separately.
 
     In the remaining examples `OVMF_BUILD` should point to the OVMF build directory, e.g.
     `$HOME/UefiWorkspace/Build/OvmfX64/NOOPT_XCODE5/FV`.
@@ -145,12 +161,21 @@ when no macOS guest booting is required.
 
     For mouse support either, a) use `Ps2MouseDxe.efi` driver, or b) pass `-usb -device usb-mouse` to QEMU and use `UsbMouseDxe.efi` driver.
 
+5. Audio support in QEMU:
+
+    QEMU flags to enable audio support in QEMU running on macOS host are `-audiodev coreaudio,id=audio0 -device ich9-intel-hda -device hda-output,audiodev=audio0`.
+      - `coreaudio` is the macOS specific hardware audio driver
+      - `intel-hda` may be used instead of `ich9-intel-hda` in order to use the QEMU Intel HDA ICH6 software driver instead of ICH9
+      - Note that current `AudioDxe.efi` UEFI sound quality in QEMU is not representative of the quality available on real hardware
+
 #### Debugger Configuration
 
 For simplicitly `efidebug.tool` performs all the necessary GDB or LLDB scripting.
 Note, this adds the `reload-uefi` command within the debugger, which you need to run after any new binary loads.
 
-The script will run and attempt to connect with reasonable defaults without additional configuration, but check `efidebug.tool` header for environment variables to configure your setup. For example, you can use `EFI_DEBUGGER` variable to force LLDB (`LLDB`) or GDB (`GDB`).
+The script will run and attempt to connect with reasonable defaults without additional configuration, but check
+`efidebug.tool` header for environment variables to configure your setup. For example, you can use `EFI_DEBUGGER`
+variable to force LLDB (`LLDB`) or GDB (`GDB`).
 
 #### GDB Configuration
 
@@ -181,9 +206,6 @@ PE/COFF images with DWARF debug information via LLD linker. LLVM 9.0 or
 newer with working dead code stripping in LLD is required for this to work
 ([LLD patches](https://bugs.llvm.org/show_bug.cgi?id=45273)).
 
-*Installation*: After applying `ClangDwarf.patch` hack onto EDK II `CLANGPDB`
-toolchain will behave as if it was `CLANGDWARF`.
-
 For debugging support it may be necessary to set `EFI_SYMBOL_PATH`
 environment variable to `:`-separated list of paths with `.debug` files,
 for example:
@@ -199,41 +221,117 @@ update DataDirectory debug entry.
 
 #### IDE Source Level Debugging
 
-Once you have got command line GDB or LLDB source level debugging working, setting up IDE source level debugging (if you prefer to use it) is a matter of choosing an IDE which already knows about whichever of GDB or LLDB you will be using, and then extracting the relevant config setup which `efidebug.tool` would have applied for you.
+Once you have got command line GDB or LLDB source level debugging working, setting up IDE source level debugging (if you prefer to use it)
+is a matter of choosing an IDE which already knows about whichever of GDB or LLDB you will be using, and then extracting the relevant config
+setup which `efidebug.tool` would have applied for you.
 
-For example, this is a working setup for LLDB debugging in VS Code on macOS:
+For example, this is a working `launch.json` file for both LLDB and GDB debugging in VS Code:
 
 ```
 {
-    "name": "OC lldb",
-    "type": "cppdbg",
-    "request": "launch",
-    "targetArchitecture": "x64",
-    "program": "${workspaceFolder}/Debug/GdbSyms/Bin/X64_XCODE5/GdbSyms.dll",
-    "cwd": "${workspaceFolder}/Debug",
-    "MIMode": "lldb",
-    "setupCommands": [
-        {"text": "settings set plugin.process.gdb-remote.target-definition-file Scripts/x86_64_target_definition.py"},
-    ],
-    "customLaunchSetupCommands": [
-        {"text": "gdb-remote localhost:8864"},
-        {"text": "target create GdbSyms/Bin/X64_XCODE5/GdbSyms.dll", "ignoreFailures": true},
-        {"text": "command script import Scripts/lldb_uefi.py"},
-        {"text": "command script add -c lldb_uefi.ReloadUefi reload-uefi"},
-        {"text": "reload-uefi"},
-    ],
-    "launchCompleteCommand": "exec-continue",
-    "logging": {
-        "engineLogging": false,
-        "trace": true,
-        "traceResponse": true
-    }
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "OC lldb",
+            "type": "cppdbg",
+            "request": "launch",
+            "targetArchitecture": "x64",
+            "program": "${workspaceFolder}/Debug/GdbSyms/Bin/X64_XCODE5/GdbSyms.dll",
+            "cwd": "${workspaceFolder}/Debug",
+            "MIMode": "lldb",
+            "setupCommands": [
+                {"text": "settings set plugin.process.gdb-remote.target-definition-file Scripts/x86_64_target_definition.py"},
+            ],
+            "customLaunchSetupCommands": [
+                {"text": "gdb-remote localhost:8864"},
+                {"text": "target create GdbSyms/Bin/X64_XCODE5/GdbSyms.dll", "ignoreFailures": true},
+                {"text": "command script import Scripts/lldb_uefi.py"},
+                {"text": "command script add -c lldb_uefi.ReloadUefi reload-uefi"},
+                {"text": "reload-uefi"},
+            ],
+            "launchCompleteCommand": "exec-continue",
+            "logging": {
+                "engineLogging": false,
+                "trace": true,
+                "traceResponse": true
+            }
+        },
+        {
+            "name": "OC lldb (32/32)",
+            "type": "cppdbg",
+            "request": "launch",
+            "targetArchitecture": "x86",
+            "program": "${workspaceFolder}/Debug/GdbSyms/Bin/Ia32_XCODE5/GdbSyms.dll",
+            "cwd": "${workspaceFolder}/Debug",
+            "MIMode": "lldb",
+            "customLaunchSetupCommands": [
+                {"text": "gdb-remote localhost:8832"},
+                {"text": "target create GdbSyms/Bin/Ia32_XCODE5/GdbSyms.dll", "ignoreFailures": true},
+                {"text": "command script import Scripts/lldb_uefi.py"},
+                {"text": "command script add -c lldb_uefi.ReloadUefi reload-uefi"},
+                {"text": "reload-uefi"},
+            ],
+            "launchCompleteCommand": "exec-continue",
+            "logging": {
+                "engineLogging": false,
+                "trace": true,
+                "traceResponse": true
+            }
+        },
+        {
+            "name": "OC gdb",
+            "type": "cppdbg",
+            "request": "launch",
+            "targetArchitecture": "x64",
+            "program": "${workspaceFolder}/Debug/GdbSyms/Bin/X64_GCC5/GdbSyms.debug",
+            "cwd": "${workspaceFolder}/Debug",
+            "MIMode": "gdb",
+            "stopAtEntry": true,
+            "setupCommands": [
+                {"text": "set arch i386:x86-64:intel"},
+                {"text": "symbol-file ${workspaceFolder}/Debug/GdbSyms/Bin/X64_GCC5/GdbSyms.debug"},
+                {"text": "target remote localhost:8864"},
+                {"text": "source ${workspaceFolder}/Debug/Scripts/gdb_uefi.py"},
+                {"text": "reload-uefi"},
+            ],
+            "launchCompleteCommand": "exec-continue",
+            "logging": {
+                "engineLogging": false,
+                "trace": true,
+                "traceResponse": true
+            }
+        },
+        {
+            "name": "OC gdb (32/32)",
+            "type": "cppdbg",
+            "request": "launch",
+            "targetArchitecture": "x86",
+            "program": "${workspaceFolder}/Debug/GdbSyms/Bin/Ia32_GCC5/GdbSyms.debug",
+            "cwd": "${workspaceFolder}/Debug",
+            "MIMode": "gdb",
+            "stopAtEntry": true,
+            "setupCommands": [
+                {"text": "set arch i386"},
+                {"text": "symbol-file ${workspaceFolder}/Debug/GdbSyms/Bin/Ia32_GCC5/GdbSyms.debug"},
+                {"text": "target remote localhost:8832"},
+                {"text": "source ${workspaceFolder}/Debug/Scripts/gdb_uefi.py"},
+                {"text": "reload-uefi"},
+            ],
+            "launchCompleteCommand": "exec-continue",
+            "logging": {
+                "engineLogging": false,
+                "trace": true,
+                "traceResponse": true
+            }
+        },
+    ]
 }
 ```
 
 _Note 1_: Debug type `cppdbg` is part of the standard VSCode cpp tools - you do not need to install any other marketplace LLDB tools.
 
-_Note 2_: Step `b DebugBreak` from `efidebug.tool` is ommitted from `customLaunchSetupCommands`, you need to add the breakpoint by hand in VSCode before launching your first debug session, otherwise VSCode will complain about hitting a breakpoint which it did not set.
+_Note 2_: Step `b DebugBreak` from `efidebug.tool` is ommitted from `customLaunchSetupCommands`, you need to add the breakpoint by
+hand in VSCode before launching your first debug session, otherwise VSCode will complain about hitting a breakpoint which it did not set.
 
 #### References
 

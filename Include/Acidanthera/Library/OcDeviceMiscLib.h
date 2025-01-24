@@ -29,15 +29,6 @@ ReleaseUsbOwnership (
   );
 
 /**
-  Perform cold reboot directly bypassing UEFI services. Does not return.
-  Supposed to work in any modern physical or virtual environment.
-**/
-VOID
-DirectResetCold (
-  VOID
-  );
-
-/**
   Reset HDA TCSEL to TC0 state.
 **/
 VOID
@@ -58,7 +49,7 @@ ActivateHpetSupport (
 
   @param[in]  CpuInfo  A pointer to the CPU info.
   @param[in]  Root     Directory to write CPU data.
-  
+
   @retval EFI_SUCCESS on success.
 **/
 EFI_STATUS
@@ -71,7 +62,7 @@ OcCpuInfoDump (
   Dump PCI info to the specified directory.
 
   @param[in]  Root     Directory to write PCI info.
-  
+
   @retval EFI_SUCCESS on success.
 **/
 EFI_STATUS
@@ -82,11 +73,17 @@ OcPciInfoDump (
 /**
   Upgrade UEFI version to 2.x.
 
+  @param[in]      Forge     If TRUE forge, else just report status.
+  @param[in]      Trash     If TRUE trash gBS->CreateEventEx directly, else reallocate gBS.
+                            Reallocate strategy will only affect current image and any images
+                            it loads. Trash strategy should affect all images.
+
   @retval EFI_SUCCESS on success.
 **/
 EFI_STATUS
 OcForgeUefiSupport (
-  VOID
+  IN BOOLEAN  Forge,
+  IN BOOLEAN  Trash
   );
 
 /**
@@ -143,7 +140,24 @@ typedef enum {
 EFI_STATUS
 ResizeGpuBars (
   IN PCI_BAR_SIZE  Size,
-  IN BOOLEAN       Increase
+  IN BOOLEAN       Increase,
+  IN BOOLEAN       UseRbIo
   );
+
+//
+// There is no existing structure for this in EDK II.
+// MdeModulePkg/.../EhciReg.h struct USB_CLASSC contains exactly the same info, but is not
+// intended for general purpose use.
+// BaseTools/.../pci22.h struct PCI_DEVICE_INDEPENDENT_REGION contains the same info, but just
+// as a UINT8[3] array, and in general where just these three bytes are read, they are either read
+// into USB_CLASSC or into a UINT8[3] array (search EDK II for PCI_CLASSCODE_OFFSET for examples).
+//
+#pragma pack(1)
+typedef struct {
+  UINT8    ProgInterface;
+  UINT8    SubClassCode;
+  UINT8    BaseCode;
+} PCI_CLASSCODE;
+#pragma pack()
 
 #endif // OC_DEVICE_MISC_LIB_H
